@@ -125,6 +125,9 @@ function calculateEstimate(form: QuoteForm) {
 export default function QuoteCalculator() {
     const [step, setStep] = useState(0);
     const [form, setForm] = useState<QuoteForm>(initialForm);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState("");
+    const [submittedQuoteId, setSubmittedQuoteId] = useState("");
 
     const estimate = useMemo(() => calculateEstimate(form), [form]);
 
@@ -146,8 +149,58 @@ export default function QuoteCalculator() {
         setStep((current) => Math.max(current - 1, 0));
     }
 
+    async function submitQuote() {
+        if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
+            setSubmitError(
+                "Please enter your name, email address and phone number.",
+            );
+            return;
+        }
+
+        setIsSubmitting(true);
+        setSubmitError("");
+
+        try {
+            const response = await fetch("/api/quotes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    ...form,
+                    estimatedMinimum: estimate.minimum,
+                    estimatedMaximum: estimate.maximum,
+                }),
+            });
+
+            const result = (await response.json()) as {
+                success?: boolean;
+                message?: string;
+                quoteId?: string;
+            };
+
+            if (!response.ok || !result.success || !result.quoteId) {
+                throw new Error(
+                    result.message ??
+                    "The quotation request could not be submitted.",
+                );
+            }
+
+            setSubmittedQuoteId(result.quoteId);
+        } catch (error) {
+            setSubmitError(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong. Please try again.",
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
     function canContinue() {
         if (step === 0) {
+
             return form.origin.trim() !== "" && form.destination.trim() !== "";
         }
 
@@ -531,12 +584,62 @@ export default function QuoteCalculator() {
 
                             <button
                                 type="button"
-                                disabled={!form.name || !form.email || !form.phone}
+                                onClick={submitQuote}
+                                disabled={
+                                    isSubmitting ||
+                                    !form.name.trim() ||
+                                    !form.email.trim() ||
+                                    !form.phone.trim() ||
+                                    Boolean(submittedQuoteId)
+                                }
                                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-6 py-4 font-bold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300"
                             >
-                                Submit Quote Request
-                                <ArrowRight className="h-5 w-5" />
+                                {isSubmitting
+                                    ? "Submitting..."
+                                    : submittedQuoteId
+                                        ? "Quote Request Submitted"
+                                        : "Submit Quote Request"}
+
+                                {!isSubmitting && !submittedQuoteId && (
+                                    <ArrowRight className="h-5 w-5" />
+                                )}
                             </button>
+
+                            {submitError && (
+                                <p
+                                    role="alert"
+                                    className="mt-4 rounded-2xl bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+                                >
+                                    {submitError}
+                                </p>
+                            )}
+
+                            {submittedQuoteId && (
+                                <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50 p-6">
+                                    <p className="text-xl font-extrabold text-emerald-900">
+                                        Your request has been received.
+                                    </p>
+
+                                    <p className="mt-2 leading-7 text-emerald-800">
+                                        Your reference number is{" "}
+                                        <strong>{submittedQuoteId}</strong>. Movento will review your
+                                        information and contact you to confirm the final quotation.
+                                    </p>
+
+                                    {process.env.NEXT_PUBLIC_WHATSAPP_NUMBER && (
+                                        <a
+                                            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                                                `Hello Movento, I submitted quotation ${submittedQuoteId}.`,
+                                            )}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-5 inline-flex rounded-full bg-emerald-700 px-6 py-3 font-bold text-white"
+                                        >
+                                            Continue on WhatsApp
+                                        </a>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
