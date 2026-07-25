@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   devIndicators: false,
 
+  serverExternalPackages: [
+    "firebase-admin",
+    "jwks-rsa",
+  ],
+
   allowedDevOrigins: [
     "127.0.0.1",
     "localhost",
