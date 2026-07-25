@@ -3,74 +3,78 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export const navigation = [
-    { label: "Home", href: "/" },
-    { label: "Services", href: "/services" },
-    { label: "Service Areas", href: "/service-areas" },
-    { label: "About", href: "/about" },
-    { label: "FAQ", href: "/faq" },
-    { label: "Contact", href: "/contact" },
-];
+import type { ChromeLink } from "@/lib/database/site-chrome";
+import {
+    isNavigationPathActive,
+    localePath,
+    type Locale,
+} from "@/lib/i18n/config";
 
 type NavigationLinksProps = {
+    navigation: ChromeLink[];
     mobile?: boolean;
     onNavigate?: () => void;
+    locale: Locale;
 };
 
-function isActivePath(pathname: string, href: string) {
-    if (href === "/") {
-        return pathname === "/";
-    }
-
-    return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 export default function NavigationLinks({
+    navigation,
     mobile = false,
     onNavigate,
+    locale,
 }: NavigationLinksProps) {
     const pathname = usePathname();
 
     if (mobile) {
         return (
-            <div className="flex flex-col gap-2">
+            <nav
+                aria-label={locale==="it"?"Collegamenti di navigazione mobile":"Mobile navigation links"}
+                className="grid grid-cols-2 gap-3"
+            >
                 {navigation.map((item) => {
-                    const active = isActivePath(pathname, item.href);
+                    const href = localePath(locale, item.href);
+                    const active = isNavigationPathActive(pathname, href);
 
                     return (
                         <Link
                             key={item.href}
-                            href={item.href}
+                            href={href}
                             onClick={onNavigate}
                             aria-current={active ? "page" : undefined}
                             className={[
-                                "flex items-center justify-between rounded-2xl px-4 py-3.5 text-base font-semibold transition",
+                                "relative flex min-h-14 min-w-0 items-center justify-center overflow-hidden rounded-2xl border px-3 py-3 text-center text-sm font-semibold leading-snug transition",
                                 active
-                                    ? "bg-blue-50 text-blue-700"
-                                    : "text-slate-800 hover:bg-slate-50 hover:text-blue-700",
+                                    ? "border-blue-200 bg-blue-50 text-blue-700"
+                                    : "border-slate-200 bg-slate-50 text-slate-800 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700",
                             ].join(" ")}
                         >
-                            <span>{item.label}</span>
+                            <span className="min-w-0 break-words">
+                                {item.label}
+                            </span>
 
                             {active && (
-                                <span className="h-2 w-2 rounded-full bg-blue-600" />
+                                <span
+                                    aria-hidden="true"
+                                    className="absolute right-3 top-3 h-2 w-2 rounded-full bg-blue-600"
+                                />
                             )}
                         </Link>
                     );
                 })}
-            </div>
+            </nav>
         );
     }
 
     return (
         <nav className="hidden items-center gap-7 lg:flex">
             {navigation.map((item) => {
-                const active = isActivePath(pathname, item.href);
+                const href = localePath(locale, item.href);
+                const active = isNavigationPathActive(pathname, href);
 
                 return (
                     <Link
                         key={item.href}
-                        href={item.href}
+                        href={href}
                         aria-current={active ? "page" : undefined}
                         className={[
                             "relative py-2 text-sm font-semibold transition",
@@ -82,6 +86,7 @@ export default function NavigationLinks({
                         {item.label}
 
                         <span
+                            aria-hidden="true"
                             className={[
                                 "absolute -bottom-1 left-0 h-0.5 rounded-full bg-blue-700 transition-all duration-200",
                                 active ? "w-full" : "w-0",

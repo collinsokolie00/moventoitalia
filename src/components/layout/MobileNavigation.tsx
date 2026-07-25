@@ -1,59 +1,83 @@
-"use client";
-
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 
-import NavigationLinks from "./NavigationLinks";
+import type { ChromeLink } from "@/lib/database/site-chrome";
+import { localePath, type Locale } from "@/lib/i18n/config";
+import type { Messages } from "@/lib/i18n/messages";
+import LanguageSelector from "./LanguageSelector";
 
-export default function MobileNavigation() {
-    const [isOpen, setIsOpen] = useState(false);
+type MobileNavigationProps = {
+    navigation: ChromeLink[];
+    headerCta: {
+        label: string;
+        href: string;
+    };
+    locale: Locale;
+    messages: Messages;
+};
 
-    function closeMenu() {
-        setIsOpen(false);
-    }
-
+export default function MobileNavigation({
+    navigation,
+    headerCta,
+    locale,
+    messages,
+}: MobileNavigationProps) {
     return (
-        <div className="lg:hidden">
-            <button
-                type="button"
-                onClick={() => setIsOpen((current) => !current)}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-slate-800 transition hover:border-blue-300 hover:text-blue-700"
-                aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
-                aria-expanded={isOpen}
+        <details className="group lg:hidden">
+            <summary
+                role="button"
+                aria-label={messages.navigation.open}
+                className="flex h-11 w-11 shrink-0 cursor-pointer list-none items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition marker:content-none active:border-blue-300 active:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 [&::-webkit-details-marker]:hidden"
             >
-                {isOpen ? (
-                    <X className="h-5 w-5" />
-                ) : (
-                    <Menu className="h-5 w-5" />
-                )}
-            </button>
+                <span className="sr-only">{messages.navigation.open}</span>
+                <Menu className="h-5 w-5 group-open:hidden" aria-hidden="true" />
+                <X className="hidden h-5 w-5 group-open:block" aria-hidden="true" />
+            </summary>
 
-            {isOpen && (
-                <div className="absolute left-0 right-0 top-full border-t border-slate-200 bg-white shadow-xl">
-                    <div className="mx-auto max-w-7xl px-5 py-5">
-                        <NavigationLinks mobile onNavigate={closeMenu} />
+            <div
+                className="fixed inset-x-0 bottom-0 top-20 z-40 lg:hidden"
+                aria-label={locale==="it"?"Navigazione mobile":"Mobile navigation"}
+            >
+                <div className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]" />
 
-                        <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2">
+                <div className="absolute inset-x-0 top-0 max-h-[calc(100dvh-5rem)] overflow-y-auto border-t border-slate-200 bg-white shadow-2xl">
+                    <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6">
+                        <p className="mb-4 text-sm font-bold uppercase tracking-[0.16em] text-blue-700">
+                            {locale === "it" ? "Menu" : "Menu"}
+                        </p>
+
+                        <nav
+                            aria-label={locale === "it" ? "Collegamenti di navigazione mobile" : "Mobile navigation links"}
+                            className="grid grid-cols-2 gap-3"
+                        >
+                            {navigation.map((item) => (
+                                <Link
+                                    key={`${item.href}-${item.label}`}
+                                    href={localePath(locale, item.href)}
+                                    className="flex min-h-14 min-w-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-center text-sm font-bold leading-snug text-slate-800 transition active:border-blue-300 active:bg-blue-50 active:text-blue-700"
+                                >
+                                    <span className="min-w-0 wrap-break-word">
+                                        {item.label}
+                                    </span>
+                                </Link>
+                            ))}
+                        </nav>
+
+                        <div className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-stretch gap-3 border-t border-slate-100 pt-5">
+                            <LanguageSelector locale={locale} labels={messages.language} />
+
                             <Link
-                                href="/quote"
-                                onClick={closeMenu}
-                                className="flex items-center justify-center rounded-full border border-blue-700 px-5 py-3 text-sm font-bold text-blue-700"
+                                href={localePath(locale, headerCta.href)}
+                                className="flex min-h-12 min-w-0 items-center justify-center rounded-2xl bg-blue-700 px-4 py-3 text-center text-sm font-bold leading-snug text-white transition active:bg-blue-800"
                             >
-                                Get an Estimate
-                            </Link>
-
-                            <Link
-                                href="/booking"
-                                onClick={closeMenu}
-                                className="flex items-center justify-center rounded-full bg-blue-700 px-5 py-3 text-sm font-bold text-white"
-                            >
-                                Book a Move
+                                <span className="min-w-0 wrap-break-word">
+                                    {headerCta.label}
+                                </span>
                             </Link>
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            </div>
+        </details>
     );
 }

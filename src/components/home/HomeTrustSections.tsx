@@ -4,145 +4,67 @@ import {
     ChevronRight,
     MessageCircleMore,
     ShieldCheck,
-    Star,
 } from "lucide-react";
+import type { FAQItem } from "@/lib/database/faqs";
+import type { Locale } from "@/lib/i18n/config";
+import { localePath } from "@/lib/i18n/config";
 
-const testimonials = [
-    {
-        name: "Local apartment move",
-        location: "Terni",
-        text: "Careful handling, clear communication and an organised moving process from beginning to end.",
-    },
-    {
-        name: "Furniture transport",
-        location: "Perugia",
-        text: "Furniture was protected properly, transported safely and delivered without unnecessary delays.",
-    },
-    {
-        name: "Home relocation",
-        location: "Rome",
-        text: "A professional service designed around planning, protection and respect for the customer’s belongings.",
-    },
-];
-
-const questions = [
-    {
-        question: "How is the final moving price calculated?",
-        answer:
-            "The price depends on distance, property size, floors, elevator access, parking, number of workers, furniture volume and any additional packing or assembly services.",
-    },
-    {
-        question: "Do I need an account to request an estimate?",
-        answer:
-            "No. Customers can calculate an estimate, request a quotation and contact Movento without creating an account.",
-    },
-    {
-        question: "Can Movento pack and protect my furniture?",
-        answer:
-            "Yes. Movento can provide furniture protection, packing, disassembly, careful loading and reassembly where required.",
-    },
-    {
-        question: "Which areas do you currently serve?",
-        answer:
-            "Our initial coverage includes Terni, Perugia, Rome and nearby towns. Longer-distance moves can be arranged through a custom quotation.",
-    },
-];
-
-export default function HomeTrustSections() {
+export default function HomeTrustSections({ questions,locale }: { questions: FAQItem[];locale:Locale }) {
+    const tr=(en:string,it:string)=>locale==="it"?it:en;
     return (
         <>
-            <section className="bg-slate-50 py-24">
+            <section className="bg-slate-50 py-16 sm:py-20 lg:py-24">
                 <div className="mx-auto max-w-7xl px-5 lg:px-8">
                     <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr]">
                         <div>
                             <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-700">
-                                Built on practical experience
+                                {tr("Built on practical experience","Fondato sull’esperienza pratica")}
                             </p>
 
                             <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">
-                                We understand how belongings should be handled.
+                                {tr("We understand how belongings should be handled.","Sappiamo come devono essere trattati i tuoi beni.")}
                             </h2>
 
                             <p className="mt-6 text-lg leading-8 text-slate-600">
-                                Movento is being built around real moving experience—not only
-                                technology. We understand packing, furniture protection,
-                                careful lifting, secure loading and respectful delivery.
+                                {tr("Movento is built around real moving experience—not only technology. We understand packing, furniture protection, careful lifting, secure loading and respectful delivery.","Movento nasce da una vera esperienza nei traslochi, non solo dalla tecnologia. Conosciamo imballaggio, protezione dei mobili, sollevamento accurato, carico sicuro e consegna rispettosa.")}
                             </p>
 
-                            <div className="mt-8 space-y-5">
-                                <div className="flex gap-4">
+                            <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-5">
+                                <div className="min-w-0 rounded-3xl bg-white p-4 sm:flex sm:gap-4 sm:p-5">
                                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                                         <ShieldCheck className="h-5 w-5" />
                                     </div>
 
-                                    <div>
-                                        <h3 className="font-bold text-slate-950">
-                                            Proper protection
+                                    <div className="mt-3 min-w-0 sm:mt-0">
+                                        <h3 className="text-sm font-bold leading-5 text-slate-950 sm:text-base">
+                                            {tr("Proper protection","Protezione adeguata")}
                                         </h3>
-                                        <p className="mt-1 leading-7 text-slate-600">
-                                            Furniture and fragile belongings are prepared carefully
-                                            before loading.
+                                        <p className="mt-1 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                                            {tr("Furniture and fragile belongings are prepared carefully before loading.","Mobili e oggetti fragili vengono preparati con cura prima del carico.")}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-4">
+                                <div className="min-w-0 rounded-3xl bg-white p-4 sm:flex sm:gap-4 sm:p-5">
                                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                                         <MessageCircleMore className="h-5 w-5" />
                                     </div>
 
-                                    <div>
-                                        <h3 className="font-bold text-slate-950">
-                                            Clear communication
+                                    <div className="mt-3 min-w-0 sm:mt-0">
+                                        <h3 className="text-sm font-bold leading-5 text-slate-950 sm:text-base">
+                                            {tr("Clear communication","Comunicazione chiara")}
                                         </h3>
-                                        <p className="mt-1 leading-7 text-slate-600">
-                                            Customers receive a clear plan before moving day and
-                                            updates throughout the process.
+                                        <p className="mt-1 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+                                            {tr("Customers receive a clear plan before moving day and updates throughout the process.","I clienti ricevono un piano chiaro prima del trasloco e aggiornamenti durante tutto il processo.")}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="grid gap-6 md:grid-cols-2">
-                            {testimonials.map((testimonial, index) => (
-                                <article
-                                    key={`${testimonial.name}-${testimonial.location}`}
-                                    className={[
-                                        "rounded-4xl border border-slate-200 bg-white p-7 shadow-sm",
-                                        index === 2 ? "md:col-span-2" : "",
-                                    ].join(" ")}
-                                >
-                                    <div className="flex gap-1 text-amber-500">
-                                        {Array.from({ length: 5 }).map((_, starIndex) => (
-                                            <Star
-                                                key={starIndex}
-                                                className="h-4 w-4 fill-current"
-                                            />
-                                        ))}
-                                    </div>
-
-                                    <p className="mt-5 text-lg leading-8 text-slate-700">
-                                        “{testimonial.text}”
-                                    </p>
-
-                                    <div className="mt-6">
-                                        <p className="font-bold text-slate-950">
-                                            {testimonial.name}
-                                        </p>
-                                        <p className="mt-1 text-sm text-slate-500">
-                                            {testimonial.location}
-                                        </p>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
+                        <div className="rounded-4xl border border-blue-100 bg-blue-50 p-8 text-blue-950"><p className="text-xl font-extrabold">{tr("Verified customer feedback","Opinioni verificate dei clienti")}</p><p className="mt-3 leading-7 text-blue-800">{tr("Published reviews are displayed below as soon as they are approved by Movento.","Le recensioni vengono mostrate appena approvate da Movento.")}</p></div>
                     </div>
 
-                    <p className="mt-8 text-sm leading-6 text-slate-500">
-                        These are temporary service examples. We will replace them with
-                        verified customer reviews after Movento completes its first jobs.
-                    </p>
                 </div>
             </section>
 
@@ -150,16 +72,15 @@ export default function HomeTrustSections() {
                 <div className="mx-auto max-w-5xl px-5 lg:px-8">
                     <div className="text-center">
                         <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-700">
-                            Frequently asked questions
+                            {tr("Frequently asked questions","Domande frequenti")}
                         </p>
 
                         <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">
-                            Important answers before your move
+                            {tr("Important answers before your move","Risposte importanti prima del trasloco")}
                         </h2>
 
                         <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                            Clear information helps customers plan with confidence and avoids
-                            unexpected problems on moving day.
+                            {tr("Clear information helps customers plan with confidence and avoids unexpected problems on moving day.","Informazioni chiare aiutano a pianificare con sicurezza ed evitare imprevisti il giorno del trasloco.")}
                         </p>
                     </div>
 
@@ -184,10 +105,10 @@ export default function HomeTrustSections() {
 
                     <div className="mt-10 text-center">
                         <Link
-                            href="/faq"
+                            href={localePath(locale,"/faq")}
                             className="inline-flex items-center gap-2 font-bold text-blue-700 hover:text-blue-900"
                         >
-                            View all frequently asked questions
+                            {tr("View all frequently asked questions","Vedi tutte le domande frequenti")}
                             <ArrowRight className="h-5 w-5" />
                         </Link>
                     </div>

@@ -24,3 +24,40 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Movento protected-admin header */
+body>.min-h-screen.bg-slate-50>header.sticky.top-0 {
+  isolation: isolate;
+  background: #193cb8 !important;
+  color: #ffffff;
+  opacity: 1;
+  filter: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body>.min-h-screen.bg-slate-50>header.sticky.top-0::before,
+body>.min-h-screen.bg-slate-50>header.sticky.top-0::after {
+  display: none;
+  content: none;
+}
+
+body>.min-h-screen.bg-slate-50>header.sticky.top-0>div {
+  position: relative;
+  z-index: 1;
+}
+
+body>.min-h-screen.bg-slate-50>header.sticky.top-0 button {
+  border-color: #ffffff;
+  background-color: #ffffff;
+  color: #193cb8;
+}
+
+body>.min-h-screen.bg-slate-50>header.sticky.top-0 button:hover {
+  background-color: #eff6ff;
+}
+
+body>.min-h-screen.bg-slate-50>header.sticky.top-0 button:focus-visible {
+  outline: 3px solid #bfdbfe;
+  outline-offset: 2px;
+}

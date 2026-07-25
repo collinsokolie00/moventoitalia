@@ -1,15 +1,18 @@
 import Link from "next/link";
+import { localePath,type Locale } from "@/lib/i18n/config";
 
 type PageIntroProps = {
   eyebrow: string;
   title: string;
   description: string;
+  locale:Locale;
 };
 
 export default function PageIntro({
   eyebrow,
   title,
   description,
+  locale,
 }: PageIntroProps) {
   return (
     <section className="min-h-[65vh] bg-slate-50">
@@ -28,17 +31,17 @@ export default function PageIntro({
 
         <div className="mt-9 flex flex-wrap gap-4">
           <Link
-            href="/quote"
+            href={localePath(locale,"/quote")}
             className="rounded-full bg-blue-700 px-6 py-3 font-semibold text-white transition hover:bg-blue-800"
           >
-            Get an Estimate
+            {locale==="it"?"Richiedi un preventivo":"Get an Estimate"}
           </Link>
 
           <Link
-            href="/contact"
+            href={localePath(locale,"/contact")}
             className="rounded-full border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-800 transition hover:border-blue-300 hover:text-blue-700"
           >
-            Contact Movento
+            {locale==="it"?"Contatta Movento":"Contact Movento"}
           </Link>
         </div>
       </div>
