@@ -1,7 +1,7 @@
 "use server";
 
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/session";
 import { adminDb } from "@/lib/database/firebase-admin";
@@ -24,6 +24,7 @@ export async function saveSettings(_state: SettingsActionState, formData: FormDa
     ...parsed.data,
     updatedAt: FieldValue.serverTimestamp(),
   });
+  revalidateTag("site-settings", "max");
   revalidatePath("/", "layout");
   revalidatePath("/admin/settings");
   return { status: "success", message: "Settings saved." };

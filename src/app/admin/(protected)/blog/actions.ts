@@ -1,7 +1,7 @@
 "use server";
 
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/session";
@@ -39,6 +39,7 @@ const articleSchema = z.object({
 export type BlogActionState = { status: "success" | "error"; message: string } | undefined;
 
 function refreshBlog(...slugs: string[]) {
+  revalidateTag("blog-articles", "max");
   revalidatePath("/blog");
   for (const slug of new Set(slugs.filter(Boolean))) revalidatePath(`/blog/${slug}`);
   revalidatePath("/");

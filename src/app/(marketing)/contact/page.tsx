@@ -8,6 +8,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { text } from "@/lib/i18n/text";
 import { localePath } from "@/lib/i18n/config";
+import PremiumPageHero from "@/components/layout/PremiumPageHero";
 
 export const dynamic = "force-dynamic";
 
@@ -36,21 +37,12 @@ export default async function ContactPage() {
 
   return (
     <main className="bg-white text-slate-950">
-      <section className="border-b border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
-          <div className="max-w-4xl">
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-blue-600">
-              {text(locale, "Contact Movento", "Contatta Movento")}
-            </p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[3.5rem]">
-              {contact.heading}
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-              {contact.introductoryText}
-            </p>
-          </div>
-        </div>
-      </section>
+      <PremiumPageHero
+        eyebrow={text(locale, "Contact Movento", "Contatta Movento")}
+        title={contact.heading}
+        description={contact.introductoryText}
+        compact
+      />
 
       <section className="mx-auto grid max-w-7xl grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] gap-3 px-3 py-12 sm:gap-8 sm:px-6 sm:py-20 lg:gap-12 lg:px-8 lg:py-28">
         <div className="min-w-0">

@@ -1,7 +1,7 @@
 "use server";
 
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/session";
 import { adminDb } from "@/lib/database/firebase-admin";
@@ -34,7 +34,7 @@ const schema = z.object({
 });
 
 export type ServiceAreaActionState = { status: "success" | "error"; message: string } | undefined;
-function refresh() { revalidatePath("/service-areas"); revalidatePath("/admin/service-areas"); revalidatePath("/admin"); }
+function refresh() { revalidateTag("service-areas","max");revalidateTag("site-media","max");revalidatePath("/service-areas"); revalidatePath("/admin/service-areas"); revalidatePath("/admin"); }
 
 export async function saveServiceArea(_state: ServiceAreaActionState, formData: FormData): Promise<ServiceAreaActionState> {
   await requireAdmin();

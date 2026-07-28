@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase-admin/firestore";
+import { unstable_cache } from "next/cache";
 
 import { adminDb } from "./firebase-admin";
 import type { Locale } from "@/lib/i18n/config";
@@ -89,16 +90,20 @@ function sortArticles(left: BlogArticle, right: BlogArticle) {
   );
 }
 
-export async function listBlogArticles(locale: Locale = "en"): Promise<BlogArticle[]> {
+const listCachedBlogArticles = unstable_cache(async (locale: Locale = "en"): Promise<BlogArticle[]> => {
   const snapshot = await adminDb.collection(BLOG_COLLECTION).get();
   return snapshot.docs.map(document => mapArticle(document, locale)).sort(sortArticles);
+},["blog-articles"],{revalidate:300,tags:["blog-articles"]});
+
+export async function listBlogArticles(locale: Locale = "en") {
+  return listCachedBlogArticles(locale);
 }
 
 export async function listPublishedBlogArticles(locale: Locale = "en"): Promise<BlogArticle[]> {
   return (await listBlogArticles(locale)).filter((article) => article.published);
 }
 
-export async function getPublishedBlogArticleBySlug(slug: string, locale: Locale = "en"): Promise<BlogArticle | null> {
+const getCachedPublishedBlogArticleBySlug=unstable_cache(async (slug: string, locale: Locale = "en"): Promise<BlogArticle | null> => {
   const snapshot = await adminDb
     .collection(BLOG_COLLECTION)
     .where("slug", "==", slug)
@@ -108,4 +113,8 @@ export async function getPublishedBlogArticleBySlug(slug: string, locale: Locale
   if (!document) return null;
   const article = mapArticle(document, locale);
   return article.published ? article : null;
+},["blog-article"],{revalidate:300,tags:["blog-articles"]});
+
+export async function getPublishedBlogArticleBySlug(slug:string,locale:Locale="en") {
+  return getCachedPublishedBlogArticleBySlug(slug,locale);
 }

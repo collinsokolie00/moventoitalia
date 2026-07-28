@@ -1,7 +1,7 @@
 "use server";
 
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/session";
@@ -26,6 +26,7 @@ export type ReviewActionState =
   | undefined;
 
 function refresh() {
+  revalidateTag("reviews", "max");
   revalidatePath("/admin");
   revalidatePath("/admin/reviews");
   revalidatePath("/");

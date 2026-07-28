@@ -110,7 +110,10 @@ export default async function ServicesPage() {
                     </span>
                   </div>
 
-                  {service.image && <div className="mt-4 aspect-[16/9] rounded-xl bg-slate-100 bg-cover bg-center sm:mt-7 sm:rounded-3xl" style={{ backgroundImage: `url(${JSON.stringify(service.image)})` }} role="img" aria-label={service.title} />}
+                  {service.image && (
+                    // eslint-disable-next-line @next/next/no-img-element -- CMS images may use any validated HTTPS host.
+                    <img src={service.image} alt={service.title} loading="lazy" decoding="async" className="mt-4 aspect-[16/9] w-full rounded-xl bg-slate-100 object-cover sm:mt-7 sm:rounded-3xl" />
+                  )}
 
                   <h3 className="mt-4 text-base font-extrabold leading-5 text-slate-950 sm:mt-7 sm:text-2xl sm:leading-normal">
                     {service.title}

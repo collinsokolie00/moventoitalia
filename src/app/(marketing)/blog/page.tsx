@@ -37,7 +37,10 @@ export default async function BlogPage() {
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 lg:gap-7">
           {articles.map((article) => <article key={article.id} className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm sm:rounded-4xl">
-            {article.featuredImageUrl && <div className="aspect-[16/9] bg-slate-100 bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(article.featuredImageUrl)})` }} role="img" aria-label={article.featuredImageAlt} />}
+            {article.featuredImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- CMS images may use any validated HTTPS host.
+              <img src={article.featuredImageUrl} alt={article.featuredImageAlt} loading="lazy" decoding="async" className="aspect-[16/9] w-full bg-slate-100 object-cover" />
+            )}
             <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-6 lg:p-7">
               <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-3"><p className="min-w-0 text-[9px] font-bold uppercase leading-4 tracking-wide text-blue-700 sm:text-sm sm:tracking-wider">{article.category}</p>{article.featured && <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] font-black text-amber-800 sm:px-3 sm:text-xs">{text(locale, "Featured", "In evidenza")}</span>}</div>
               <h2 className="mt-2 text-sm font-extrabold leading-5 text-slate-950 sm:mt-4 sm:text-xl sm:leading-tight lg:text-2xl">{article.title}</h2>

@@ -1,7 +1,7 @@
 "use server";
 
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/session";
@@ -31,6 +31,8 @@ const serviceSchema = z.object({
 export type ServiceActionState = { status: "success" | "error"; message: string } | undefined;
 
 function refreshServices() {
+  revalidateTag("services", "max");
+  revalidateTag("site-media", "max");
   revalidateLocalizedPaths(["/services"]);
   revalidatePath("/admin/services");
   revalidatePath("/admin");

@@ -1,7 +1,7 @@
 "use server";
 
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/session";
@@ -140,6 +140,7 @@ export async function saveHomepage(
     : [];
   await Promise.all(previousPaths.filter((path: string) => path && !retained.has(path)).map(deleteCmsImage));
 
+  revalidateTag("homepage-content", "max");
   revalidatePath("/");
   revalidatePath("/admin/homepage");
 

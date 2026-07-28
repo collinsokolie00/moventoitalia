@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import type { Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "./firebase-admin";
 import type { Locale } from "@/lib/i18n/config";
@@ -11,7 +12,7 @@ function timestampToISOString(value:unknown){
   return null;
 }
 
-export async function getContactContent(locale:Locale="en"):Promise<ContactContent|null>{
+const getCachedContactContent=unstable_cache(async (locale:Locale="en"):Promise<ContactContent|null>=>{
   const snapshot=await adminDb.collection(CONTACT_COLLECTION).doc(CONTACT_DOCUMENT).get();
   if(!snapshot.exists)return null;
   const data=snapshot.data()??{};
@@ -32,4 +33,8 @@ export async function getContactContent(locale:Locale="en"):Promise<ContactConte
     createdAt:timestampToISOString(data.createdAt),
     updatedAt:timestampToISOString(data.updatedAt),
   };
+},["contact-content"],{revalidate:300,tags:["contact-content"]});
+
+export async function getContactContent(locale:Locale="en") {
+  return getCachedContactContent(locale);
 }

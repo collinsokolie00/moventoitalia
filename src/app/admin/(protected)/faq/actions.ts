@@ -1,6 +1,6 @@
 "use server";
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/session";
 import { adminDb } from "@/lib/database/firebase-admin";
@@ -14,7 +14,7 @@ const schema=z.object({
   published:z.boolean(),displayOrder:z.coerce.number().int().min(0).max(10000),
 });
 export type FAQActionState={status:"success"|"error";message:string}|undefined;
-function refresh(){revalidatePath("/faq");revalidatePath("/");revalidatePath("/admin/faq");revalidatePath("/admin");}
+function refresh(){revalidateTag("faqs","max");revalidatePath("/faq");revalidatePath("/");revalidatePath("/admin/faq");revalidatePath("/admin");}
 export async function saveFAQ(_state:FAQActionState,formData:FormData):Promise<FAQActionState>{
   await requireAdmin();const id=String(formData.get("id")??"");
   const parsed=schema.safeParse({

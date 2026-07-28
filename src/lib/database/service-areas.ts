@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { DocumentData, QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { unstable_cache } from "next/cache";
 import { adminDb } from "./firebase-admin";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -58,9 +59,13 @@ function mapServiceArea(document: QueryDocumentSnapshot<DocumentData>, locale:Lo
   };
 }
 
-export async function listServiceAreas(locale:Locale="en"): Promise<ServiceArea[]> {
+const listCachedServiceAreas = unstable_cache(async (locale:Locale="en"): Promise<ServiceArea[]> => {
   const snapshot = await adminDb.collection(SERVICE_AREAS_COLLECTION).get();
   return snapshot.docs.map(document=>mapServiceArea(document,locale)).sort((left, right) => left.displayOrder - right.displayOrder || left.areaName.localeCompare(right.areaName));
+},["service-areas"],{revalidate:300,tags:["service-areas"]});
+
+export async function listServiceAreas(locale:Locale="en") {
+  return listCachedServiceAreas(locale);
 }
 
 export async function listPublishedServiceAreas(locale:Locale="en"): Promise<ServiceArea[]> {

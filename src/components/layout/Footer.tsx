@@ -40,7 +40,7 @@ export default async function Footer() {
           </div>
         </div>
 
-        {chrome.footerNavigation.map(group => <div key={group.title}><h2 className="font-semibold">{locale === "it" && !group.titleIt ? (group.title === "Services" ? "Servizi" : group.title === "Company" ? "Azienda" : group.title) : group.title}</h2><div className="mt-3 flex flex-col gap-2.5 text-sm text-slate-300">{group.links.map(link => <Link key={`${link.label}-${link.href}`} href={localePath(locale,link.href)}>{locale === "it" && !link.labelIt ? footerLabels[link.href] ?? link.label : link.label}</Link>)}</div></div>)}
+        {chrome.footerNavigation.map((group, groupIndex) => <div key={`${group.title}-${groupIndex}`}><h2 className="font-semibold">{locale === "it" && !group.titleIt ? (group.title === "Services" ? "Servizi" : group.title === "Company" ? "Azienda" : group.title) : group.title}</h2><div className="mt-3 flex flex-col gap-2.5 text-sm text-slate-300">{group.links.map((link, linkIndex) => <Link key={`${groupIndex}-${linkIndex}-${link.href}`} href={localePath(locale,link.href)}>{locale === "it" && !link.labelIt ? footerLabels[link.href] ?? link.label : link.label}</Link>)}</div></div>)}
 
         <div>
           <h2 className="font-semibold">{locale === "it" && !chrome.footerCta.titleIt ? "Pronto a traslocare?" : chrome.footerCta.title}</h2>

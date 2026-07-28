@@ -1,6 +1,6 @@
 "use server";
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/session";
 import { adminDb } from "@/lib/database/firebase-admin";
@@ -29,5 +29,5 @@ export async function saveContact(_state:ContactActionState,formData:FormData):P
   });
   if(!parsed.success)return{status:"error",message:parsed.error.issues[0]?.message??"Check the contact fields."};
   await adminDb.collection(CONTACT_COLLECTION).doc(CONTACT_DOCUMENT).set({...parsed.data,updatedAt:FieldValue.serverTimestamp()},{merge:true});
-  revalidatePath("/contact");revalidatePath("/","layout");revalidatePath("/admin/contact");return{status:"success",message:"Contact information saved."};
+  revalidateTag("contact-content","max");revalidatePath("/contact");revalidatePath("/","layout");revalidatePath("/admin/contact");return{status:"success",message:"Contact information saved."};
 }

@@ -5,6 +5,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { getSiteMedia } from "@/lib/database/site-media";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { text } from "@/lib/i18n/text";
+import PremiumPageHero from "@/components/layout/PremiumPageHero";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata() {
@@ -20,14 +21,12 @@ export default async function ServiceAreasPage() {
     ?["Traslochi di case e appartamenti","Traslochi di uffici e attività","Ritiro e consegna mobili","Assistenza per imballaggio e disimballaggio","Carico e scarico","Traslochi tra Umbria e Lazio"]
     :["Home and apartment moves","Office and business relocations","Furniture collection and delivery","Packing and unpacking assistance","Loading and unloading","Moves between Umbria and Lazio"];
   return <main className="bg-white text-slate-950">
-    <section className={`relative overflow-hidden border-b border-slate-200 ${media.serviceAreasHero.url?"bg-blue-950 text-white":"bg-slate-50"}`} style={media.serviceAreasHero.url?{backgroundImage:`url(${JSON.stringify(media.serviceAreasHero.url)})`,backgroundPosition:media.serviceAreasHero.position,backgroundSize:"cover"}:undefined}>
-      {media.serviceAreasHero.url&&<><div className="absolute inset-0 bg-blue-950/75"/><span className="sr-only">{media.serviceAreasHero.alt}</span></>}
-      <div className="relative mx-auto max-w-7xl px-5 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28"><div className="max-w-4xl">
-        <p className={`text-sm font-bold uppercase tracking-[0.3em] ${media.serviceAreasHero.url?"text-blue-200":"text-blue-600"}`}>{tr("Service areas","Zone servite")}</p>
-        <h1 className={`mt-5 max-w-4xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl ${media.serviceAreasHero.url?"text-white":"text-slate-950"}`}>{tr("Professional moving services across Umbria and beyond","Servizi di trasloco professionali in Umbria e oltre")}</h1>
-        <p className={`mt-6 max-w-3xl text-base leading-7 sm:text-lg sm:leading-8 ${media.serviceAreasHero.url?"text-blue-100":"text-slate-600"}`}>{tr("Movento provides moving, transport and relocation services across our published coverage areas.","Movento offre servizi di trasloco, trasporto e trasferimento in tutte le zone di copertura pubblicate.")}</p>
-      </div></div>
-    </section>
+    <PremiumPageHero
+      eyebrow={tr("Service areas","Zone servite")}
+      title={tr("Professional moving services across Umbria and beyond","Servizi di trasloco professionali in Umbria e oltre")}
+      description={tr("Movento provides moving, transport and relocation services across our published coverage areas.","Movento offre servizi di trasloco, trasporto e trasferimento in tutte le zone di copertura pubblicate.")}
+      image={media.serviceAreasHero}
+    />
     <ServiceAreasExplorer areas={areas} locale={locale}/>
     <section className="border-y border-slate-200 bg-slate-50"><div className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24"><div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"><div>
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600"><Truck className="h-7 w-7"/></div>

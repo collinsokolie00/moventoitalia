@@ -5,6 +5,7 @@ import { createPageMetadata } from "@/lib/seo";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/config";
 import { text } from "@/lib/i18n/text";
+import PremiumPageHero from "@/components/layout/PremiumPageHero";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata() {
@@ -31,11 +32,11 @@ export default async function FAQPage() {
   const tr = (en: string, it: string) => text(locale, en, it);
   return <main className="bg-white text-slate-950">
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
-    <section className="border-b border-slate-200 bg-slate-50"><div className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-28"><div className="max-w-4xl">
-      <p className="text-sm font-bold uppercase tracking-[0.3em] text-blue-600">{tr("Frequently asked questions", "Domande frequenti")}</p>
-      <h1 className="mt-5 max-w-4xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">{tr("Everything you need to know before moving", "Tutto ciò che devi sapere prima del trasloco")}</h1>
-      <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">{tr("Find clear answers about quotations, pricing, packing, access, timing, insurance and preparing for your moving day.", "Trova risposte chiare su preventivi, prezzi, imballaggio, accessi, tempistiche, assicurazione e preparazione al giorno del trasloco.")}</p>
-    </div></div></section>
+    <PremiumPageHero
+      eyebrow={tr("Frequently asked questions", "Domande frequenti")}
+      title={tr("Everything you need to know before moving", "Tutto ciò che devi sapere prima del trasloco")}
+      description={tr("Find clear answers about quotations, pricing, packing, access, timing, insurance and preparing for your moving day.", "Trova risposte chiare su preventivi, prezzi, imballaggio, accessi, tempistiche, assicurazione e preparazione al giorno del trasloco.")}
+    />
     <section className="mx-auto max-w-7xl px-5 py-20 sm:px-6 lg:px-8 lg:py-28"><div className="grid gap-12 lg:grid-cols-[320px_1fr]">
       <aside className="lg:sticky lg:top-28 lg:self-start"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600"><HelpCircle className="h-7 w-7" /></div>
         <h2 className="mt-6 text-3xl font-bold tracking-tight">{tr("Helpful moving information", "Informazioni utili sul trasloco")}</h2>

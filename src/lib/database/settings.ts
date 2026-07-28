@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { adminDb } from "./firebase-admin";
 
 export const SETTINGS_COLLECTION = "siteContent";
@@ -27,7 +28,7 @@ export type SiteSettings = {
   maintenanceMessageIt:string;
 };
 
-export async function getSiteSettings(): Promise<SiteSettings | null> {
+const getCachedSiteSettings = unstable_cache(async (): Promise<SiteSettings | null> => {
   const snapshot = await adminDb.collection(SETTINGS_COLLECTION).doc(SETTINGS_DOCUMENT).get();
   if (!snapshot.exists) return null;
   const data = snapshot.data() ?? {};
@@ -52,6 +53,10 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
     maintenanceMessage: data.maintenanceMessage ?? "",
     maintenanceMessageIt:data.maintenanceMessageIt??"",
   };
+},["site-settings"],{revalidate:300,tags:["site-settings"]});
+
+export async function getSiteSettings() {
+  return getCachedSiteSettings();
 }
 
 export function formatSender(from: string, senderName: string) {

@@ -1,6 +1,6 @@
 "use server";
 import { FieldValue } from "firebase-admin/firestore";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/session";
 import { adminDb } from "@/lib/database/firebase-admin";
@@ -24,4 +24,4 @@ export async function saveSiteChrome(_state:ChromeActionState,formData:FormData)
   const contact=contactSchema.safeParse({address:formData.get("address"),addressIt:formData.get("addressIt")??"",phone:formData.get("phone"),email:formData.get("email"),whatsapp:formData.get("whatsapp"),callingHours:formData.get("callingHours")});
   if(!chrome.success)return{status:"error",message:chrome.error.issues[0]?.message??"Check the header and footer fields."};if(!contact.success)return{status:"error",message:contact.error.issues[0]?.message??"Check the contact fields."};
   const batch=adminDb.batch();const timestamp=FieldValue.serverTimestamp();batch.set(adminDb.collection(SITE_CHROME_COLLECTION).doc(SITE_CHROME_DOCUMENT),{...chrome.data,updatedAt:timestamp});batch.set(adminDb.collection(CONTACT_COLLECTION).doc(CONTACT_DOCUMENT),{...contact.data,updatedAt:timestamp},{merge:true});await batch.commit();
-  revalidatePath("/","layout");revalidatePath("/contact");revalidatePath("/admin/navigation");revalidatePath("/admin/contact");return{status:"success",message:"Header and footer saved."};}
+  revalidateTag("site-chrome","max");revalidateTag("contact-content","max");revalidatePath("/","layout");revalidatePath("/contact");revalidatePath("/admin/navigation");revalidatePath("/admin/contact");return{status:"success",message:"Header and footer saved."};}

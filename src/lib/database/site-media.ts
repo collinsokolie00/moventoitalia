@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { adminDb } from "./firebase-admin";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -75,7 +76,7 @@ function normalizeImage(value: unknown,locale:Locale="en"): CmsImage {
   };
 }
 
-export async function getSiteMedia(locale:Locale="en"): Promise<SiteMedia> {
+const getCachedSiteMedia = unstable_cache(async (locale:Locale="en"): Promise<SiteMedia> => {
   const snapshot = await adminDb
     .collection(SITE_MEDIA_COLLECTION)
     .doc(SITE_MEDIA_DOCUMENT)
@@ -86,4 +87,8 @@ export async function getSiteMedia(locale:Locale="en"): Promise<SiteMedia> {
     serviceAreasHero: normalizeImage(data.serviceAreasHero,locale),
     servicesBannerSlides: normalizeSlides(data.servicesBannerSlides,locale),
   };
+},["site-media"],{revalidate:300,tags:["site-media"]});
+
+export async function getSiteMedia(locale:Locale="en") {
+  return getCachedSiteMedia(locale);
 }

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { adminDb } from "./firebase-admin";
 import { normalizeSlides, type PromoSlide } from "./site-media";
 import type { Locale } from "@/lib/i18n/config";
@@ -51,7 +52,7 @@ export type HomepageContent = {
   bannerSlides: PromoSlide[];
 };
 
-export async function getHomepageContent(locale:Locale="en"): Promise<HomepageContent | null> {
+const getCachedHomepageContent = unstable_cache(async (locale:Locale="en"): Promise<HomepageContent | null> => {
   const snapshot = await adminDb
     .collection(HOMEPAGE_COLLECTION)
     .doc(HOMEPAGE_DOCUMENT)
@@ -68,4 +69,8 @@ export async function getHomepageContent(locale:Locale="en"): Promise<HomepageCo
     callToAction: {...data.callToAction,eyebrow:pick(data.callToAction.eyebrow,data.callToAction.eyebrowIt),eyebrowIt:data.callToAction.eyebrowIt??"",title:pick(data.callToAction.title,data.callToAction.titleIt),titleIt:data.callToAction.titleIt??"",description:pick(data.callToAction.description,data.callToAction.descriptionIt),descriptionIt:data.callToAction.descriptionIt??"",primaryButton:button(data.callToAction.primaryButton),secondaryButton:button(data.callToAction.secondaryButton)},
     bannerSlides: normalizeSlides(data.bannerSlides,locale),
   };
+},["homepage-content"],{revalidate:300,tags:["homepage-content"]});
+
+export async function getHomepageContent(locale:Locale="en") {
+  return getCachedHomepageContent(locale);
 }

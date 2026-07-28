@@ -74,7 +74,7 @@ export default async function BlogArticlePage({ params }: ArticlePageProps) {
 
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeSchema }} />
-    <article>
+    <article className="bg-white text-slate-950">
       <header className="bg-linear-to-br from-blue-950 via-blue-900 to-blue-700 text-white">
         <div className="mx-auto max-w-5xl px-5 py-20 lg:px-8 lg:py-28">
           <Link href={localePath(locale,"/blog")} className="inline-flex items-center gap-2 font-bold text-blue-200 hover:text-white"><ArrowLeft className="h-5 w-5" />{text(locale,"Back to Blog","Torna al Blog")}</Link>
@@ -84,8 +84,11 @@ export default async function BlogArticlePage({ params }: ArticlePageProps) {
           <div className="mt-8 flex flex-wrap gap-5 text-sm text-blue-100"><span>{text(locale,"By","Di")} {article.authorName}</span><span className="flex items-center gap-2"><CalendarDays className="h-4 w-4" />{formatDate(article.publishDate,intlLocales[locale])}</span><span className="flex items-center gap-2"><Clock3 className="h-4 w-4" />{article.readingTime} {text(locale,"min read","min di lettura")}</span></div>
         </div>
       </header>
-      {article.featuredImageUrl && <div className="mx-auto -mb-8 mt-12 aspect-[16/8] max-w-5xl rounded-4xl bg-slate-100 bg-cover bg-center shadow-xl" style={{ backgroundImage: `url(${JSON.stringify(article.featuredImageUrl)})` }} role="img" aria-label={article.featuredImageAlt} />}
-      <div className="mx-auto max-w-3xl px-5 py-20 lg:px-8"><BlogArticleContent content={article.content} /><div className="mt-14 border-t border-slate-200 pt-8"><Link href={localePath(locale,"/blog")} className="inline-flex items-center gap-2 font-bold text-blue-700 hover:text-blue-900"><ArrowLeft className="h-5 w-5" />{text(locale,"Back to all articles","Torna a tutti gli articoli")}</Link></div></div>
+      {article.featuredImageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element -- CMS images may use any validated HTTPS host.
+        <img src={article.featuredImageUrl} alt={article.featuredImageAlt} loading="lazy" decoding="async" className="mx-auto -mb-8 mt-12 aspect-[16/8] w-full max-w-5xl rounded-4xl bg-slate-100 object-cover shadow-xl" />
+      )}
+      <div className="mx-auto max-w-3xl bg-white px-5 py-20 text-slate-950 lg:px-8"><BlogArticleContent content={article.content} /><div className="mt-14 border-t border-slate-200 pt-8"><Link href={localePath(locale,"/blog")} className="inline-flex items-center gap-2 font-bold text-blue-700 hover:text-blue-900"><ArrowLeft className="h-5 w-5" />{text(locale,"Back to all articles","Torna a tutti gli articoli")}</Link></div></div>
     </article>
   </>;
 }
