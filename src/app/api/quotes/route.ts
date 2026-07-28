@@ -56,10 +56,16 @@ export async function POST(request: Request) {
         });
 
         let emailStatus: {
+            configurationValid: boolean;
+            customerEmailAttempted: boolean;
+            adminEmailAttempted: boolean;
             customerEmailSent: boolean;
             adminEmailSent: boolean;
             customerProviderMessageId?: string;
         } = {
+            configurationValid: false,
+            customerEmailAttempted: false,
+            adminEmailAttempted: false,
             customerEmailSent: false,
             adminEmailSent: false,
         };
@@ -69,6 +75,15 @@ export async function POST(request: Request) {
                 quoteId,
                 quote,
                 settings,
+            });
+
+            console.info("[Movento Email] Quote delivery completed", {
+                reference: quoteId,
+                configurationValid: emailStatus.configurationValid,
+                customerEmailAttempted: emailStatus.customerEmailAttempted,
+                customerEmailSent: emailStatus.customerEmailSent,
+                adminEmailAttempted: emailStatus.adminEmailAttempted,
+                adminEmailSent: emailStatus.adminEmailSent,
             });
 
             if (emailStatus.customerEmailSent) {
@@ -86,7 +101,13 @@ export async function POST(request: Request) {
                 }
             }
         } catch (emailError) {
-            console.error("Quote email error:", emailError);
+            console.error("[Movento Email] Unexpected quote delivery failure", {
+                reference: quoteId,
+                error:
+                    emailError instanceof Error
+                        ? emailError.message.slice(0, 500)
+                        : "unknown-error",
+            });
         }
 
         return NextResponse.json(
@@ -95,7 +116,10 @@ export async function POST(request: Request) {
                 message: italian?"La richiesta di preventivo è stata ricevuta.":"Your quotation request has been received.",
                 quoteId,
                 emailStatus: {
+                    configurationValid: emailStatus.configurationValid,
+                    customerEmailAttempted: emailStatus.customerEmailAttempted,
                     customerEmailSent: emailStatus.customerEmailSent,
+                    adminEmailAttempted: emailStatus.adminEmailAttempted,
                     adminEmailSent: emailStatus.adminEmailSent,
                 },
             },

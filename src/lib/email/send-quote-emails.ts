@@ -21,9 +21,13 @@ type SendQuoteEmailsOptions = {
 };
 
 type QuoteEmailStatus = {
+  configurationValid: boolean;
+  customerEmailAttempted: boolean;
+  adminEmailAttempted: boolean;
   customerEmailSent: boolean;
   adminEmailSent: boolean;
   customerProviderMessageId?: string;
+  adminProviderMessageId?: string;
 };
 
 type SendAdminCustomerEmailOptions = {
@@ -37,7 +41,20 @@ export type AdminCustomerEmailResult =
   | { success: true; providerMessageId: string }
   | { success: false; code: "not-configured" | "delivery-failed" };
 
-function getSafeErrorCode(error: unknown): string {
+function getSafeErrorMessage(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    const name =
+      "name" in error && typeof error.name === "string"
+        ? `${error.name}: `
+        : "";
+    return `${name}${error.message}`.slice(0, 500);
+  }
+
   if (
     typeof error === "object" &&
     error !== null &&
@@ -45,15 +62,6 @@ function getSafeErrorCode(error: unknown): string {
     typeof error.name === "string"
   ) {
     return error.name;
-  }
-
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error &&
-    typeof error.message === "string"
-  ) {
-    return error.message;
   }
 
   if (error instanceof Error) {
@@ -72,15 +80,26 @@ export async function sendQuoteEmails({
   const sender = process.env.RESEND_FROM_EMAIL?.trim();
 
   const notificationEmail =
-    settings?.quoteNotificationRecipientEmail ??
-    process.env.MOVENTO_NOTIFICATION_EMAIL;
+    process.env.MOVENTO_NOTIFICATION_EMAIL?.trim() ||
+    settings?.quoteNotificationRecipientEmail?.trim() ||
+    "";
 
   if (!apiKey || !sender) {
     console.error(
-      "[Movento Email] Quote stored, but emails were skipped because RESEND_API_KEY or RESEND_FROM_EMAIL is missing.",
+      "[Movento Email] Quote stored, but transactional email configuration is incomplete.",
+      {
+        reference: quoteId,
+        resendApiKeyConfigured: Boolean(apiKey),
+        resendFromEmailConfigured: Boolean(sender),
+        customerEmailAttempted: false,
+        adminEmailAttempted: false,
+      },
     );
 
     return {
+      configurationValid: false,
+      customerEmailAttempted: false,
+      adminEmailAttempted: false,
       customerEmailSent: false,
       adminEmailSent: false,
     };
@@ -107,14 +126,17 @@ export async function sendQuoteEmails({
   const safePropertyType = escapeHtml(String(quote.propertyType));
   const safeRooms = escapeHtml(String(quote.rooms));
 
-  let customerEmailSent = false;
-  let adminEmailSent = false;
-  let customerProviderMessageId: string | undefined;
+  const customerEmailAttempted = true;
+  const adminEmailAttempted = Boolean(notificationEmail);
 
-  /*
-   * Automatic customer confirmation
-   */
-  try {
+  console.info("[Movento Email] Starting quote email delivery", {
+    reference: quoteId,
+    customerEmailAttempted,
+    adminEmailAttempted,
+    notificationRecipientConfigured: Boolean(notificationEmail),
+  });
+
+  const sendCustomerConfirmation = async () => {
     const customerResult = await resend.emails.send({
       from: sender,
       to: quote.email,
@@ -171,112 +193,116 @@ export async function sendQuoteEmails({
     });
 
     if (customerResult.error) {
-      console.error("[Movento Email] Customer confirmation rejected", {
-        reference: quoteId,
-        code: customerResult.error.name ?? "provider-rejected",
-        message: customerResult.error.message,
-      });
-    } else if (customerResult.data?.id) {
-      customerEmailSent = true;
-      customerProviderMessageId = customerResult.data.id;
-
-      console.log("[Movento Email] Customer confirmation sent", {
-        reference: quoteId,
-        providerMessageId: customerResult.data.id,
-      });
-    } else {
-      console.error(
-        "[Movento Email] Customer confirmation returned no provider message ID",
-        {
-          reference: quoteId,
-        },
+      throw new Error(
+        `${customerResult.error.name ?? "provider-rejected"}: ${customerResult.error.message}`,
       );
     }
-  } catch (error) {
-    console.error("[Movento Email] Customer confirmation request failed", {
+    if (!customerResult.data?.id) {
+      throw new Error("Resend returned no customer message ID.");
+    }
+    return customerResult.data.id;
+  };
+
+  const sendAdminNotification = async () => {
+    if (!notificationEmail) {
+      throw new Error("MOVENTO_NOTIFICATION_EMAIL is not configured.");
+    }
+    const adminResult = await resend.emails.send({
+      from: sender,
+      to: notificationEmail,
+      replyTo: quote.email,
+      subject: `New Movento quote: ${quote.origin} → ${quote.destination}`,
+      html: renderMoventoEmail({
+        eyebrow: "New customer enquiry",
+        title: "New quotation request",
+        preheader: `${quote.name} requested a quote from ${quote.origin} to ${quote.destination}.`,
+        footerEmail: replyToAddress,
+        body: `
+          <p style="margin:0 0 22px;color:#334155;font-size:15px;line-height:1.7">
+            A customer has submitted a new moving quotation request. Replying to this email will reply directly to the customer.
+          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f6f8fc;border:1px solid #dbe4f0;border-radius:12px">
+            <tr><td style="padding:20px">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                ${renderDetailRows([
+                  { label: "Reference", value: escapeHtml(quoteId) },
+                  { label: "Customer", value: safeName },
+                  { label: "Email", value: safeEmail },
+                  { label: "Telephone", value: safePhone },
+                  { label: "Route", value: `${safeOrigin} → ${safeDestination}` },
+                  { label: "Property", value: safePropertyType },
+                  { label: "Rooms", value: safeRooms },
+                  { label: "Date", value: safeMovingDate },
+                  { label: "Estimate", value: `${escapeHtml(minimum)}–${escapeHtml(maximum)}` },
+                  { label: "Notes", value: safeNotes.replaceAll("\n", "<br>") },
+                ])}
+              </table>
+            </td></tr>
+          </table>
+        `,
+      }),
+    });
+    if (adminResult.error) {
+      throw new Error(
+        `${adminResult.error.name ?? "provider-rejected"}: ${adminResult.error.message}`,
+      );
+    }
+    if (!adminResult.data?.id) {
+      throw new Error("Resend returned no admin message ID.");
+    }
+    return adminResult.data.id;
+  };
+
+  const [customerResult, adminResult] = await Promise.allSettled([
+    sendCustomerConfirmation(),
+    notificationEmail
+      ? sendAdminNotification()
+      : Promise.reject(new Error("MOVENTO_NOTIFICATION_EMAIL is not configured.")),
+  ]);
+
+  const customerEmailSent = customerResult.status === "fulfilled";
+  const adminEmailSent = adminResult.status === "fulfilled";
+  const customerProviderMessageId =
+    customerResult.status === "fulfilled" ? customerResult.value : undefined;
+  const adminProviderMessageId =
+    adminResult.status === "fulfilled" ? adminResult.value : undefined;
+
+  if (customerResult.status === "fulfilled") {
+    console.info("[Movento Email] Customer confirmation accepted by Resend", {
       reference: quoteId,
-      code: getSafeErrorCode(error),
+      customerEmailAttempted: true,
+      providerMessageId: customerResult.value,
+    });
+  } else {
+    console.error("[Movento Email] Customer confirmation failed", {
+      reference: quoteId,
+      customerEmailAttempted: true,
+      error: getSafeErrorMessage(customerResult.reason),
     });
   }
 
-  /*
-   * Automatic administrator notification
-   */
-  if (notificationEmail) {
-    try {
-      const adminResult = await resend.emails.send({
-        from: sender,
-        to: notificationEmail,
-        replyTo: quote.email,
-        subject: `New Movento quote: ${safeOrigin} → ${safeDestination}`,
-        html: renderMoventoEmail({
-          eyebrow: "New customer enquiry",
-          title: "New quotation request",
-          preheader: `${safeName} requested a quote from ${safeOrigin} to ${safeDestination}.`,
-          footerEmail: replyToAddress,
-          body: `
-            <p style="margin:0 0 22px;color:#334155;font-size:15px;line-height:1.7">
-              A customer has submitted a new moving quotation request. Replying to this email will reply directly to the customer.
-            </p>
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f6f8fc;border:1px solid #dbe4f0;border-radius:12px">
-              <tr><td style="padding:20px">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                  ${renderDetailRows([
-                    { label: "Reference", value: escapeHtml(quoteId) },
-                    { label: "Customer", value: safeName },
-                    { label: "Email", value: safeEmail },
-                    { label: "Telephone", value: safePhone },
-                    { label: "Route", value: `${safeOrigin} → ${safeDestination}` },
-                    { label: "Property", value: safePropertyType },
-                    { label: "Rooms", value: safeRooms },
-                    { label: "Date", value: safeMovingDate },
-                    { label: "Estimate", value: `${escapeHtml(minimum)}–${escapeHtml(maximum)}` },
-                    { label: "Notes", value: safeNotes.replaceAll("\n", "<br>") },
-                  ])}
-                </table>
-              </td></tr>
-            </table>
-          `,
-        }),
-      });
-
-      if (adminResult.error) {
-        console.error("[Movento Email] Admin notification rejected", {
-          reference: quoteId,
-          code: adminResult.error.name ?? "provider-rejected",
-          message: adminResult.error.message,
-        });
-      } else if (adminResult.data?.id) {
-        adminEmailSent = true;
-
-        console.log("[Movento Email] Admin notification sent", {
-          reference: quoteId,
-          providerMessageId: adminResult.data.id,
-        });
-      } else {
-        console.error(
-          "[Movento Email] Admin notification returned no provider message ID",
-          {
-            reference: quoteId,
-          },
-        );
-      }
-    } catch (error) {
-      console.error("[Movento Email] Admin notification request failed", {
-        reference: quoteId,
-        code: getSafeErrorCode(error),
-      });
-    }
+  if (adminResult.status === "fulfilled") {
+    console.info("[Movento Email] Admin notification accepted by Resend", {
+      reference: quoteId,
+      adminEmailAttempted: true,
+      providerMessageId: adminResult.value,
+    });
   } else {
-    console.warn(
-      "[Movento Email] Admin notification skipped because no notification email is configured.",
-    );
+    console.error("[Movento Email] Admin notification failed", {
+      reference: quoteId,
+      adminEmailAttempted,
+      error: getSafeErrorMessage(adminResult.reason),
+    });
   }
 
   return {
+    configurationValid: true,
+    customerEmailAttempted,
+    adminEmailAttempted,
     customerEmailSent,
     adminEmailSent,
     customerProviderMessageId,
+    adminProviderMessageId,
   };
 }
 
@@ -339,7 +365,7 @@ export async function sendAdminCustomerEmail({
     };
   } catch (error) {
     console.error("[Movento Email] Manual customer email request failed", {
-      code: getSafeErrorCode(error),
+      error: getSafeErrorMessage(error),
     });
 
     return {
