@@ -18,6 +18,8 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         "/preview/",
         "/quote/success",
         "/quote/result",
+        "/quote/confirmation",
+        "/booking",
         "/booking/success",
         "/error",
         "/result",

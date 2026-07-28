@@ -3,7 +3,7 @@ import { listPublishedBlogArticles } from "@/lib/database/blog";
 import { getSiteUrl } from "@/lib/seo";
 import { intlLocales, localePath, locales } from "@/lib/i18n/config";
 
-const publicRoutes = ["/", "/services", "/service-areas", "/about", "/faq", "/contact", "/quote", "/blog"];
+const publicRoutes = ["/", "/services", "/service-areas", "/about", "/faq", "/contact", "/quote", "/blog", "/terms", "/privacy", "/cookies"];
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -29,6 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       intlLocales[locale],
       new URL(localePath(locale, route), baseUrl).toString(),
     ]));
+    languages["x-default"] = new URL(localePath("en", route), baseUrl).toString();
     return locales.map(locale => ({
       url: new URL(localePath(locale, route), baseUrl).toString(),
       lastModified: article?.updatedAt ?? (article?.publishDate ? `${article.publishDate}T00:00:00.000Z` : undefined),

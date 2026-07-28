@@ -9,6 +9,7 @@ import { intlLocales, localePath, locales, openGraphLocales } from "@/lib/i18n/c
 import { getRequestLocale } from "@/lib/i18n/server";
 
 const developmentUrl = new URL("http://localhost:3000");
+const productionUrl = new URL("https://moventoitalia.com");
 
 function parseOrigin(value: string | null | undefined) {
   if (!value) return null;
@@ -45,6 +46,8 @@ export const getSiteUrl = cache(async () => {
     return configured;
   }
 
+  if (process.env.NODE_ENV === "production") return productionUrl;
+
   const deployment = parseOrigin(
     process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL,
   );
@@ -54,12 +57,9 @@ export const getSiteUrl = cache(async () => {
   const forwardedHost = requestHeaders.get("x-forwarded-host")?.split(",")[0]?.trim();
   const host = forwardedHost || requestHeaders.get("host");
   const forwardedProtocol = requestHeaders.get("x-forwarded-proto")?.split(",")[0]?.trim();
-  const loopbackRequest = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/u.test(host ?? "");
   const protocol = forwardedProtocol === "http" || forwardedProtocol === "https"
     ? forwardedProtocol
-    : process.env.NODE_ENV === "production" && !loopbackRequest
-      ? "https"
-      : "http";
+    : "http";
   const requestOrigin = parseOrigin(host ? `${protocol}://${host}` : null);
   return requestOrigin ?? developmentUrl;
 });
@@ -110,6 +110,7 @@ export async function createPageMetadata({
   const languages = Object.fromEntries(
     locales.map((item) => [intlLocales[item], new URL(localePath(item, path), baseUrl).toString()]),
   );
+  languages["x-default"] = new URL(localePath("en", path), baseUrl).toString();
   const socialImage = await absoluteUrl(image || settings?.defaultSeoImageUrl || "");
 
   return {

@@ -10,6 +10,7 @@ import { absoluteUrl, canonicalPath, createPageMetadata, getSeoSettings, getSite
 import { getRequestLocale } from "@/lib/i18n/server";
 import { intlLocales, localePath } from "@/lib/i18n/config";
 import { text } from "@/lib/i18n/text";
+import BreadcrumbJsonLd from "@/components/seo/BreadcrumbJsonLd";
 
 const getArticle = cache(getPublishedBlogArticleBySlug);
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -67,13 +68,18 @@ export default async function BlogArticlePage({ params }: ArticlePageProps) {
     datePublished: `${article.publishDate}T00:00:00.000Z`,
     dateModified: article.updatedAt ?? `${article.publishDate}T00:00:00.000Z`,
     author: { "@type": "Person", name: article.authorName },
-    publisher: { "@type": "Organization", name: settings?.legalCompanyName ?? "Movento" },
+    publisher: { "@id": new URL("/#organization",baseUrl).toString() },
     mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
   };
   const safeSchema = JSON.stringify(schema).replace(/</g, "\\u003c");
 
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeSchema }} />
+    <BreadcrumbJsonLd locale={locale} items={[
+      { name: "Home", path: "/" },
+      { name: "Blog", path: "/blog" },
+      { name: article.title, path: `/blog/${article.slug}` },
+    ]} />
     <article className="bg-white text-slate-950">
       <header className="bg-linear-to-br from-blue-950 via-blue-900 to-blue-700 text-white">
         <div className="mx-auto max-w-5xl px-5 py-20 lg:px-8 lg:py-28">

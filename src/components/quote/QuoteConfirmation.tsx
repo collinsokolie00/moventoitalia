@@ -14,7 +14,6 @@ import {
   PackageCheck,
   Phone,
   ShieldCheck,
-  Sparkles,
   Tag,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -327,7 +326,7 @@ export default function QuoteConfirmation({
                 key={title}
                 className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur sm:p-5"
               >
-                <Sparkles className="h-5 w-5 text-blue-200" />
+                <PackageCheck className="h-5 w-5 text-blue-200" />
                 <h3 className="mt-3 text-sm font-extrabold leading-5 sm:text-base">
                   {title}
                 </h3>

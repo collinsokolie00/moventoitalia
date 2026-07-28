@@ -17,6 +17,9 @@ import AnimatedPromoBanner from "@/components/media/AnimatedPromoBanner";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/config";
 import { text } from "@/lib/i18n/text";
+import BreadcrumbJsonLd from "@/components/seo/BreadcrumbJsonLd";
+import JsonLd from "@/components/seo/JsonLd";
+import { getSiteUrl } from "@/lib/seo";
 
 export async function generateMetadata() {
   const locale=await getRequestLocale();
@@ -35,8 +38,29 @@ export default async function ServicesPage() {
     listPublishedServices(locale),
     getSiteMedia(locale),
   ]);
+  const siteUrl = await getSiteUrl();
   return (
     <>
+      <BreadcrumbJsonLd locale={locale} items={[
+        { name: "Home", path: "/" },
+        { name: text(locale, "Services", "Servizi"), path: "/services" },
+      ]} />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: text(locale, "Movento moving services", "Servizi di trasloco Movento"),
+        itemListElement: services.map((service, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          item: {
+            "@type": "Service",
+            name: service.title,
+            description: service.seoDescription || service.description,
+            provider: { "@id": new URL("/#moving-company", siteUrl).toString() },
+            areaServed: ["Terni", "Perugia", "Rome", "Umbria", "Lazio"],
+          },
+        })),
+      }} />
       <section
         className="relative overflow-hidden bg-linear-to-br from-blue-950 via-blue-900 to-blue-700 text-white"
         style={media.servicesHero.url ? {

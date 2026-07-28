@@ -6,6 +6,9 @@ import { getSiteMedia } from "@/lib/database/site-media";
 import { getRequestLocale } from "@/lib/i18n/server";
 import { text } from "@/lib/i18n/text";
 import PremiumPageHero from "@/components/layout/PremiumPageHero";
+import BreadcrumbJsonLd from "@/components/seo/BreadcrumbJsonLd";
+import JsonLd from "@/components/seo/JsonLd";
+import { getSiteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata() {
@@ -15,12 +18,24 @@ export async function generateMetadata() {
 
 export default async function ServiceAreasPage() {
   const locale=await getRequestLocale();
-  const [areas,media]=await Promise.all([listPublishedServiceAreas(locale),getSiteMedia(locale)]);
+  const [areas,media,siteUrl]=await Promise.all([listPublishedServiceAreas(locale),getSiteMedia(locale),getSiteUrl()]);
   const tr=(en:string,it:string)=>text(locale,en,it);
   const availableServices=locale==="it"
     ?["Traslochi di case e appartamenti","Traslochi di uffici e attività","Ritiro e consegna mobili","Assistenza per imballaggio e disimballaggio","Carico e scarico","Traslochi tra Umbria e Lazio"]
     :["Home and apartment moves","Office and business relocations","Furniture collection and delivery","Packing and unpacking assistance","Loading and unloading","Moves between Umbria and Lazio"];
   return <main className="bg-white text-slate-950">
+    <BreadcrumbJsonLd locale={locale} items={[
+      { name: "Home", path: "/" },
+      { name: tr("Service areas", "Zone servite"), path: "/service-areas" },
+    ]} />
+    <JsonLd data={{
+      "@context": "https://schema.org",
+      "@type": "Service",
+      name: tr("Movento moving and relocation coverage", "Copertura traslochi e trasferimenti Movento"),
+      provider: { "@id": new URL("/#moving-company",siteUrl).toString() },
+      areaServed: areas.map(area=>area.areaName),
+      description: tr("Professional moving and relocation services across Movento's published coverage areas.","Servizi professionali di trasloco e trasferimento nelle zone di copertura pubblicate da Movento."),
+    }} />
     <PremiumPageHero
       eyebrow={tr("Service areas","Zone servite")}
       title={tr("Professional moving services across Umbria and beyond","Servizi di trasloco professionali in Umbria e oltre")}

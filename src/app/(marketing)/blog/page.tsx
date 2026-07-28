@@ -6,6 +6,7 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { intlLocales, localePath } from "@/lib/i18n/config";
 import { createPageMetadata } from "@/lib/seo";
 import { text } from "@/lib/i18n/text";
+import BreadcrumbJsonLd from "@/components/seo/BreadcrumbJsonLd";
 
 export async function generateMetadata() {
   const locale=await getRequestLocale();
@@ -26,6 +27,10 @@ export default async function BlogPage() {
   const locale = await getRequestLocale();
   const articles = await listPublishedBlogArticles(locale);
   return <>
+    <BreadcrumbJsonLd locale={locale} items={[
+      { name: "Home", path: "/" },
+      { name: "Blog", path: "/blog" },
+    ]} />
     <section className="bg-linear-to-br from-blue-950 via-blue-900 to-blue-700 text-white">
       <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32">
         <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-200">{text(locale, "Movento Blog", "Blog Movento")}</p>

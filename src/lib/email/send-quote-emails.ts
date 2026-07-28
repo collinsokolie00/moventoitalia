@@ -5,9 +5,14 @@ import { Resend } from "resend";
 import type { QuoteRequestInput } from "@/lib/validation/quote";
 import {
   formatCurrency,
-  formatSender,
   type SiteSettings,
 } from "@/lib/database/settings";
+import {
+  escapeHtml,
+  getSenderAddress,
+  renderDetailRows,
+  renderMoventoEmail,
+} from "./template";
 
 type SendQuoteEmailsOptions = {
   quoteId: string;
@@ -31,15 +36,6 @@ type SendAdminCustomerEmailOptions = {
 export type AdminCustomerEmailResult =
   | { success: true; providerMessageId: string }
   | { success: false; code: "not-configured" | "delivery-failed" };
-
-export function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
 function getSafeErrorCode(error: unknown): string {
   if (
@@ -73,15 +69,15 @@ export async function sendQuoteEmails({
   settings,
 }: SendQuoteEmailsOptions): Promise<QuoteEmailStatus> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const sender = process.env.RESEND_FROM_EMAIL?.trim();
 
   const notificationEmail =
     settings?.quoteNotificationRecipientEmail ??
     process.env.MOVENTO_NOTIFICATION_EMAIL;
 
-  if (!apiKey || !from) {
-    console.warn(
-      "[Movento Email] Quote stored, but emails were skipped because RESEND_API_KEY or EMAIL_FROM is missing.",
+  if (!apiKey || !sender) {
+    console.error(
+      "[Movento Email] Quote stored, but emails were skipped because RESEND_API_KEY or RESEND_FROM_EMAIL is missing.",
     );
 
     return {
@@ -91,13 +87,7 @@ export async function sendQuoteEmails({
   }
 
   const resend = new Resend(apiKey);
-
-  const sender = settings
-    ? formatSender(from, settings.customerEmailSenderName)
-    : from;
-
-  const replyToAddress =
-    settings?.emailReplyToAddress?.trim() || undefined;
+  const replyToAddress = getSenderAddress(sender);
 
   const minimum = settings
     ? formatCurrency(quote.estimatedMinimum, settings)
@@ -130,99 +120,54 @@ export async function sendQuoteEmails({
       to: quote.email,
       replyTo: replyToAddress,
       subject: `Movento quote request received — ${quoteId}`,
-      html: `
-        <div style="background:#f3f6fb;padding:32px 16px;font-family:Arial,sans-serif;color:#172033">
-          <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #dbe4f0">
-            <div style="background:#1d4ed8;padding:28px 32px">
-              <p style="margin:0 0 8px;color:#bfdbfe;font-size:13px;font-weight:700;letter-spacing:2px">
-                MOVENTO
+      html: renderMoventoEmail({
+        eyebrow: "Quote confirmation",
+        title: "Thank you for choosing Movento",
+        preheader: `We received your quote request ${quoteId}.`,
+        footerEmail: replyToAddress,
+        cta: process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://")
+          ? { href: process.env.NEXT_PUBLIC_SITE_URL, label: "Visit Movento" }
+          : undefined,
+        body: `
+          <p style="margin:0 0 16px;font-size:17px;line-height:1.65">Hello ${safeName},</p>
+          <p style="margin:0 0 24px;color:#334155;font-size:15px;line-height:1.75">
+            We have received your moving quotation request. Our team will review the information and contact you as soon as possible to confirm availability and the final quotation.
+          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f6f8fc;border:1px solid #dbe4f0;border-radius:12px">
+            <tr><td style="padding:20px">
+              <p style="margin:0 0 10px;color:#0b3b8f;font-size:16px;font-weight:800">Quote details</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                ${renderDetailRows([
+                  { label: "Reference", value: escapeHtml(quoteId) },
+                  { label: "Moving from", value: safeOrigin },
+                  { label: "Moving to", value: safeDestination },
+                  { label: "Preferred date", value: safeMovingDate },
+                  { label: "Property", value: safePropertyType },
+                  { label: "Rooms", value: safeRooms },
+                  { label: "Initial estimate", value: `${escapeHtml(minimum)}–${escapeHtml(maximum)}` },
+                ])}
+              </table>
+            </td></tr>
+          </table>
+          <p style="margin:24px 0 12px;color:#334155;font-size:14px;line-height:1.7">
+            This estimate is preliminary. The final price may change after Movento reviews the complete requirements of your move.
+          </p>
+          <p style="margin:0;color:#334155;font-size:14px;line-height:1.7">
+            Please keep your reference number for future communication.
+          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-top:22px;background:#eaf2ff;border-radius:12px">
+            <tr><td style="padding:18px">
+              <p style="margin:0 0 6px;color:#0b3b8f;font-size:14px;font-weight:800">Need packing support?</p>
+              <p style="margin:0;color:#334155;font-size:14px;line-height:1.65">
+                Movento can add paid packing materials, professional packing or professional unpacking to your final quotation. Reply to this email and include reference ${escapeHtml(quoteId)}.
               </p>
-
-              <h1 style="margin:0;color:#ffffff;font-size:28px;line-height:1.25">
-                Thank you for choosing Movento
-              </h1>
-            </div>
-
-            <div style="padding:32px">
-              <p style="margin:0 0 18px;font-size:17px;line-height:1.6">
-                Hello ${safeName},
-              </p>
-
-              <p style="margin:0 0 24px;line-height:1.7">
-                We have received your moving quotation request. Our team will
-                review the information and contact you as soon as possible to
-                confirm availability and the final quotation.
-              </p>
-
-              <div style="background:#f3f6fb;padding:22px;border-radius:14px;margin:24px 0">
-                <p style="margin:0 0 14px;font-size:17px">
-                  <strong>Reference:</strong> ${quoteId}
-                </p>
-
-                <p style="margin:8px 0">
-                  <strong>Moving from:</strong> ${safeOrigin}
-                </p>
-
-                <p style="margin:8px 0">
-                  <strong>Moving to:</strong> ${safeDestination}
-                </p>
-
-                <p style="margin:8px 0">
-                  <strong>Preferred date:</strong> ${safeMovingDate}
-                </p>
-
-                <p style="margin:8px 0">
-                  <strong>Property:</strong> ${safePropertyType}
-                </p>
-
-                <p style="margin:8px 0">
-                  <strong>Rooms:</strong> ${safeRooms}
-                </p>
-
-                <p style="margin:8px 0">
-                  <strong>Initial estimate:</strong> ${minimum}–${maximum}
-                </p>
-              </div>
-
-              <p style="margin:24px 0 12px;line-height:1.7">
-                This estimate is preliminary. The final price may change after
-                Movento reviews the complete requirements of your move.
-              </p>
-
-              <p style="margin:0;line-height:1.7">
-                Please keep your reference number for future communication.
-              </p>
-
-              <div style="background:#eff6ff;padding:20px;border-radius:14px;margin:24px 0">
-                <p style="margin:0 0 8px;font-weight:700;color:#1e3a8a">
-                  Need packing support?
-                </p>
-                <p style="margin:0;line-height:1.7;color:#334155">
-                  Movento can add paid packing materials, professional packing
-                  or professional unpacking to your final quotation. Reply to
-                  this email and include reference ${quoteId}.
-                </p>
-              </div>
-
-              ${process.env.NEXT_PUBLIC_SITE_URL ? `
-                <p style="margin:24px 0 0">
-                  <a href="${escapeHtml(process.env.NEXT_PUBLIC_SITE_URL)}"
-                     style="display:inline-block;background:#1d4ed8;color:#ffffff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:700">
-                    Visit Movento
-                  </a>
-                </p>
-              ` : ""}
-
-              <div style="border-top:1px solid #e2e8f0;margin-top:30px;padding-top:22px">
-                <p style="margin:0;color:#64748b;font-size:13px;line-height:1.6">
-                  This confirmation was sent automatically after your quotation
-                  request was submitted.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      `,
+            </td></tr>
+          </table>
+          <p style="margin:24px 0 0;color:#64748b;font-size:12px;line-height:1.6">
+            This confirmation was sent automatically after your quotation request was submitted.
+          </p>
+        `,
+      }),
     });
 
     if (customerResult.error) {
@@ -264,28 +209,35 @@ export async function sendQuoteEmails({
         to: notificationEmail,
         replyTo: quote.email,
         subject: `New Movento quote: ${safeOrigin} → ${safeDestination}`,
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;color:#172033">
-            <h1>New quotation request</h1>
-
-            <p><strong>Reference:</strong> ${quoteId}</p>
-            <p><strong>Customer:</strong> ${safeName}</p>
-            <p><strong>Email:</strong> ${safeEmail}</p>
-            <p><strong>Telephone:</strong> ${safePhone}</p>
-            <p>
-              <strong>Route:</strong>
-              ${safeOrigin} → ${safeDestination}
+        html: renderMoventoEmail({
+          eyebrow: "New customer enquiry",
+          title: "New quotation request",
+          preheader: `${safeName} requested a quote from ${safeOrigin} to ${safeDestination}.`,
+          footerEmail: replyToAddress,
+          body: `
+            <p style="margin:0 0 22px;color:#334155;font-size:15px;line-height:1.7">
+              A customer has submitted a new moving quotation request. Replying to this email will reply directly to the customer.
             </p>
-            <p><strong>Property:</strong> ${safePropertyType}</p>
-            <p><strong>Rooms:</strong> ${safeRooms}</p>
-            <p><strong>Date:</strong> ${safeMovingDate}</p>
-            <p>
-              <strong>Estimate:</strong>
-              ${minimum}–${maximum}
-            </p>
-            <p><strong>Notes:</strong> ${safeNotes}</p>
-          </div>
-        `,
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f6f8fc;border:1px solid #dbe4f0;border-radius:12px">
+              <tr><td style="padding:20px">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  ${renderDetailRows([
+                    { label: "Reference", value: escapeHtml(quoteId) },
+                    { label: "Customer", value: safeName },
+                    { label: "Email", value: safeEmail },
+                    { label: "Telephone", value: safePhone },
+                    { label: "Route", value: `${safeOrigin} → ${safeDestination}` },
+                    { label: "Property", value: safePropertyType },
+                    { label: "Rooms", value: safeRooms },
+                    { label: "Date", value: safeMovingDate },
+                    { label: "Estimate", value: `${escapeHtml(minimum)}–${escapeHtml(maximum)}` },
+                    { label: "Notes", value: safeNotes.replaceAll("\n", "<br>") },
+                  ])}
+                </table>
+              </td></tr>
+            </table>
+          `,
+        }),
       });
 
       if (adminResult.error) {
@@ -335,21 +287,19 @@ export async function sendAdminCustomerEmail({
   settings,
 }: SendAdminCustomerEmailOptions): Promise<AdminCustomerEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const sender = process.env.RESEND_FROM_EMAIL?.trim();
 
-  if (!apiKey || !from) {
+  if (!apiKey || !sender) {
+    console.error(
+      "[Movento Email] Manual customer email skipped because RESEND_API_KEY or RESEND_FROM_EMAIL is missing.",
+    );
     return {
       success: false,
       code: "not-configured",
     };
   }
 
-  const sender = settings
-    ? formatSender(from, settings.customerEmailSenderName)
-    : from;
-
-  const replyToAddress =
-    settings?.emailReplyToAddress?.trim() || undefined;
+  const replyToAddress = getSenderAddress(sender);
 
   try {
     const result = await new Resend(apiKey).emails.send({
@@ -358,6 +308,17 @@ export async function sendAdminCustomerEmail({
       replyTo: replyToAddress,
       subject,
       text: message,
+      html: renderMoventoEmail({
+        eyebrow: `Message from ${settings?.publicTradingName?.trim() || "Movento"}`,
+        title: subject,
+        preheader: message.slice(0, 140),
+        footerEmail: replyToAddress,
+        body: `
+          <div style="color:#334155;font-size:15px;line-height:1.75">
+            ${escapeHtml(message).replaceAll("\n", "<br>")}
+          </div>
+        `,
+      }),
     });
 
     if (result.error || !result.data?.id) {
