@@ -269,14 +269,12 @@ export default function QuoteConfirmation({
             description={tr("Your online estimate is preliminary. The confirmed written quotation follows Movento’s review.","La stima online è preliminare. Il preventivo scritto confermato viene preparato dopo la verifica di Movento.")}
           />
           <ol className="mt-9 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
-            {nextSteps.map((step, index) => (
+            {nextSteps.map((step) => (
               <li
                 key={step}
                 className="rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:p-6"
               >
-                <span className="text-2xl font-black text-blue-200">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+                <span aria-hidden="true" className="block h-7" />
                 <p className="mt-3 text-sm font-bold leading-6 text-slate-800 sm:text-base">
                   {step}
                 </p>
