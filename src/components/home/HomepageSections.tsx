@@ -15,9 +15,9 @@ import { localePath } from "@/lib/i18n/config";
 export default function HomepageSections({ callToAction, serviceAreas,locale }: { callToAction: HomepageContent["callToAction"] | null; serviceAreas: ServiceArea[];locale:Locale }) {
     const tr=(en:string,it:string)=>locale==="it"?it:en;
     const processSteps=[
-      {number:"01",title:tr("Request your estimate","Richiedi il preventivo"),description:tr("Tell us where you are moving, your property size and the services you require.","Indicaci il percorso, le dimensioni dell’immobile e i servizi necessari."),icon:MessageSquareText},
-      {number:"02",title:tr("Confirm the plan","Conferma il piano"),description:tr("We review the information, confirm availability and finalise your moving plan.","Esaminiamo le informazioni, confermiamo la disponibilità e definiamo il piano."),icon:CalendarCheck2},
-      {number:"03",title:tr("We complete the move","Eseguiamo il trasloco"),description:tr("Our team arrives, protects your belongings and manages the move carefully.","Il team arriva, protegge i tuoi beni e gestisce il trasloco con cura."),icon:PackageCheck},
+      {title:tr("Request your estimate","Richiedi il preventivo"),description:tr("Tell us where you are moving, your property size and the services you require.","Indicaci il percorso, le dimensioni dell’immobile e i servizi necessari."),icon:MessageSquareText},
+      {title:tr("Confirm the plan","Conferma il piano"),description:tr("We review the information, confirm availability and finalise your moving plan.","Esaminiamo le informazioni, confermiamo la disponibilità e definiamo il piano."),icon:CalendarCheck2},
+      {title:tr("We complete the move","Eseguiamo il trasloco"),description:tr("Our team arrives, protects your belongings and manages the move carefully.","Il team arriva, protegge i tuoi beni e gestisce il trasloco con cura."),icon:PackageCheck},
     ];
     const priceExamples=[
       {label:tr("Studio apartment","Monolocale"),price:"€250–€350"},
@@ -52,17 +52,13 @@ export default function HomepageSections({ callToAction, serviceAreas,locale }: 
 
                             return (
                                 <article
-                                    key={step.number}
+                                    key={step.title}
                                     className="relative w-[82vw] max-w-80 shrink-0 snap-start rounded-4xl border border-slate-200 bg-slate-50 p-5 md:w-auto md:max-w-none md:p-8"
                                 >
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
                                         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-700 text-white">
                                             <Icon className="h-7 w-7" />
                                         </div>
-
-                                        <span className="text-4xl font-black text-blue-100">
-                                            {step.number}
-                                        </span>
                                     </div>
 
                                     <h3 className="mt-6 text-xl font-bold text-slate-950 md:mt-8 md:text-2xl">
